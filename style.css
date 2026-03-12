@@ -219,6 +219,17 @@ button:hover {
   align-items: center;
 }
 
+.layout-toggle-wrap {
+  margin-top: 10px;
+}
+
+#layoutToggleBtn {
+  width: 100%;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.56rem;
+  padding: 9px 10px;
+}
+
 #audioToggleBtn {
   display: grid;
   place-items: center;
@@ -719,4 +730,39 @@ canvas {
   body {
     overflow: auto;
   }
+}
+
+body.mobile-layout {
+  overflow: auto;
+}
+
+body.mobile-layout .app {
+  display: flex;
+  flex-direction: column;
+  width: min(760px, 95vw);
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+body.mobile-layout .app > .game-wrap {
+  order: 1;
+}
+
+body.mobile-layout .app > .panel:not(.leaderboard-panel) {
+  order: 2;
+}
+
+body.mobile-layout .app > .leaderboard-panel {
+  order: 3;
+}
+
+body.mobile-layout .panel,
+body.mobile-layout .game-wrap {
+  height: auto;
+}
+
+body.mobile-layout canvas {
+  width: min(100%, 640px);
+  max-height: none;
 }

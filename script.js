@@ -31,6 +31,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 const startBtn = document.getElementById("startBtn");
+const layoutToggleBtn = document.getElementById("layoutToggleBtn");
 const playerNameInput = document.getElementById("playerName");
 const resetNicknameBtn = document.getElementById("resetNicknameBtn");
 const snakeColorInput = document.getElementById("snakeColor");
@@ -92,11 +93,27 @@ let isFullLeaderboardOpen = false;
 let fullLeaderboardData = [];
 const PLAYER_NAME_KEY = "cryptoSnakePlayerName";
 const PLAYER_NICKNAME_CLAIM_KEY = "cryptoSnakeClaimedNickname";
+const LAYOUT_MODE_KEY = "cryptoSnakeLayoutMode";
 
 highScoreEl.textContent = highScore;
 
 function randomInt(max) {
   return Math.floor(Math.random() * max);
+}
+
+function syncLayoutButtonText() {
+  const mobileActive = document.body.classList.contains("mobile-layout");
+  layoutToggleBtn.textContent = mobileActive ? "Switch to Desktop Layout" : "Switch to Mobile Layout";
+}
+
+function applySavedLayoutMode() {
+  const savedMode = localStorage.getItem(LAYOUT_MODE_KEY);
+  if (savedMode === "mobile") {
+    document.body.classList.add("mobile-layout");
+  } else {
+    document.body.classList.remove("mobile-layout");
+  }
+  syncLayoutButtonText();
 }
 
 function lockNicknameInput() {
@@ -813,6 +830,11 @@ resetNicknameBtn.addEventListener("click", () => {
   unlockNicknameInput();
   setPlayerView();
 });
+layoutToggleBtn.addEventListener("click", () => {
+  const mobileActive = document.body.classList.toggle("mobile-layout");
+  localStorage.setItem(LAYOUT_MODE_KEY, mobileActive ? "mobile" : "desktop");
+  syncLayoutButtonText();
+});
 toggleFullLeaderboardBtn.addEventListener("click", () => {
   isFullLeaderboardOpen = !isFullLeaderboardOpen;
   fullLeaderboardModalBackdrop.classList.toggle("open", isFullLeaderboardOpen);
@@ -850,6 +872,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 initPlayerProfile();
+applySavedLayoutMode();
 setSnakeColor(snakeColorInput.value);
 syncAudioUi();
 loadLeaderboard();
