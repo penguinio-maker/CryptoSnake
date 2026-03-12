@@ -1,0 +1,148 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:,">
+  <title>Crypto Snake</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="panel">
+      <h1>CRYPTO SNAKE</h1>
+      <p class="subtitle">Pixel vibe</p>
+
+      <label for="playerName">Player Name</label>
+      <input id="playerName" maxlength="18" placeholder="Enter your name" />
+      <p id="nicknameError" class="nickname-error"></p>
+      <div class="nickname-tools">
+        <button id="resetNicknameBtn" type="button">Reset nickname</button>
+        <p class="nickname-warning">Changing your nickname may cause you to lose access to the previous one.</p>
+      </div>
+
+      <label for="snakeColor">Snake Color</label>
+      <div class="color-row">
+        <div class="color-picker" id="colorPicker">
+          <button class="color-swatch active" type="button" data-color="#3ddc97" aria-label="Mint green" style="--swatch:#3ddc97;"></button>
+          <button class="color-swatch" type="button" data-color="#2cc9ff" aria-label="Sky blue" style="--swatch:#2cc9ff;"></button>
+          <button class="color-swatch" type="button" data-color="#f9d423" aria-label="Sun yellow" style="--swatch:#f9d423;"></button>
+          <button class="color-swatch" type="button" data-color="#ff6b6b" aria-label="Coral red" style="--swatch:#ff6b6b;"></button>
+          <button class="color-swatch" type="button" data-color="#ff8c42" aria-label="Orange blaze" style="--swatch:#ff8c42;"></button>
+          <button class="color-swatch" type="button" data-color="#8a7dff" aria-label="Electric indigo" style="--swatch:#8a7dff;"></button>
+          <button class="color-swatch" type="button" data-color="#ff4fd8" aria-label="Neon pink" style="--swatch:#ff4fd8;"></button>
+          <button class="color-swatch palette-swatch" id="customColorBtn" type="button" aria-label="Custom color">
+            <span>Palette</span>
+          </button>
+          <input id="snakeColor" type="hidden" value="#3ddc97" />
+        </div>
+      </div>
+
+      <div class="stats">
+        <div><span>Player:</span> <strong id="playerView">Guest</strong></div>
+        <div><span>Score:</span> <strong id="score">0</strong></div>
+        <div><span>High Score:</span> <strong id="highScore">0</strong></div>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn">Start / Restart</button>
+      </div>
+      <div class="audio-controls">
+        <button id="audioToggleBtn" type="button" aria-label="Toggle sound" aria-pressed="false">
+          <span class="pixel-speaker-wrap" aria-hidden="true">
+            <span class="pixel-speaker"></span>
+          </span>
+        </button>
+        <label class="volume-wrap" for="volumeSlider">
+          <span>VOL</span>
+          <input id="volumeSlider" type="range" min="0" max="100" value="22" />
+        </label>
+      </div>
+
+      <p class="hint">Controls: Arrow keys or WASD</p>
+      <p class="hint tiny">Collect <b>SOL</b>, <b>BTC</b>, <b>ETH</b></p>
+    </section>
+
+    <section class="game-wrap">
+      <canvas id="game" width="640" height="640" aria-label="Game board"></canvas>
+      <div id="overlay" class="overlay visible">
+        <h2>Press "Start"</h2>
+        <p>and begin your crypto run</p>
+      </div>
+    </section>
+
+    <aside class="panel leaderboard-panel">
+      <div class="leaderboard-card">
+        <h3>Top 10</h3>
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nick</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody">
+            <tr><td colspan="3">Connect Firebase to load leaderboard</td></tr>
+          </tbody>
+        </table>
+        <p id="playerRankInfo" class="player-rank-info"></p>
+        <button id="toggleFullLeaderboardBtn" type="button">View Full Leaderboard</button>
+      </div>
+      <div class="rules-card">
+        <h3>Rules</h3>
+        <p>SOL = 3 points</p>
+        <p>ETH = 4 points</p>
+        <p>BTC = 5 points</p>
+      </div>
+    </aside>
+  </main>
+
+  <div class="color-modal-backdrop" id="colorModalBackdrop" aria-hidden="true">
+    <section class="color-modal" role="dialog" aria-modal="true" aria-labelledby="colorModalTitle">
+      <h3 id="colorModalTitle">Custom Color</h3>
+
+      <div class="color-preview-wrap">
+        <div class="color-preview" id="colorPreview"></div>
+        <p class="color-value" id="colorValue">#3DDC97</p>
+      </div>
+
+      <div class="slider-row">
+        <label for="hueRange">Hue</label>
+        <input id="hueRange" type="range" min="0" max="360" value="155" />
+      </div>
+      <div class="slider-row">
+        <label for="satRange">Saturation</label>
+        <input id="satRange" type="range" min="0" max="100" value="70" />
+      </div>
+      <div class="slider-row">
+        <label for="lightRange">Lightness</label>
+        <input id="lightRange" type="range" min="0" max="100" value="55" />
+      </div>
+
+      <div class="modal-actions">
+        <button id="cancelColorBtn" type="button">Cancel</button>
+        <button id="applyColorBtn" type="button">Apply</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="leaderboard-modal-backdrop" id="fullLeaderboardModalBackdrop" aria-hidden="true">
+    <section class="leaderboard-modal" role="dialog" aria-modal="true" aria-labelledby="fullLeaderboardTitle">
+      <div class="leaderboard-modal-head">
+        <h3 id="fullLeaderboardTitle">Full Leaderboard</h3>
+        <button id="closeFullLeaderboardBtn" type="button" aria-label="Close full leaderboard">Close</button>
+      </div>
+      <input id="fullLeaderboardSearch" type="text" placeholder="Search nickname" />
+      <div id="fullLeaderboardList" class="full-leaderboard-list"></div>
+    </section>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script type="module" src="script.js"></script>
+</body>
+</html>
