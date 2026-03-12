@@ -94,11 +94,21 @@ let fullLeaderboardData = [];
 const PLAYER_NAME_KEY = "cryptoSnakePlayerName";
 const PLAYER_NICKNAME_CLAIM_KEY = "cryptoSnakeClaimedNickname";
 const LAYOUT_MODE_KEY = "cryptoSnakeLayoutMode";
+const SWIPE_MIN_DISTANCE = 28;
 
 highScoreEl.textContent = highScore;
 
 function randomInt(max) {
   return Math.floor(Math.random() * max);
+}
+
+function setPendingDirection(nextX, nextY) {
+  if (!playing) return;
+  if (nextX === 0 && nextY === -1 && direction.y === 1) return;
+  if (nextX === 0 && nextY === 1 && direction.y === -1) return;
+  if (nextX === -1 && nextY === 0 && direction.x === 1) return;
+  if (nextX === 1 && nextY === 0 && direction.x === -1) return;
+  pendingDirection = { x: nextX, y: nextY };
 }
 
 function syncLayoutButtonText() {
@@ -763,18 +773,88 @@ document.addEventListener("keydown", (e) => {
   if (!playing) return;
 
   if ((key === "arrowup" || key === "w") && direction.y !== 1) {
-    pendingDirection = { x: 0, y: -1 };
+    setPendingDirection(0, -1);
   }
   if ((key === "arrowdown" || key === "s") && direction.y !== -1) {
-    pendingDirection = { x: 0, y: 1 };
+    setPendingDirection(0, 1);
   }
   if ((key === "arrowleft" || key === "a") && direction.x !== 1) {
-    pendingDirection = { x: -1, y: 0 };
+    setPendingDirection(-1, 0);
   }
   if ((key === "arrowright" || key === "d") && direction.x !== -1) {
-    pendingDirection = { x: 1, y: 0 };
+    setPendingDirection(1, 0);
   }
 });
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchMoved = false;
+
+function applyTapDirection(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const localX = clientX - rect.left;
+  const localY = clientY - rect.top;
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+  const dx = localX - centerX;
+  const dy = localY - centerY;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    setPendingDirection(dx < 0 ? -1 : 1, 0);
+  } else {
+    setPendingDirection(0, dy < 0 ? -1 : 1);
+  }
+}
+
+canvas.addEventListener(
+  "touchstart",
+  (e) => {
+    if (!e.touches.length) return;
+    touchMoved = false;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    if (playing) e.preventDefault();
+  },
+  { passive: false }
+);
+
+canvas.addEventListener(
+  "touchmove",
+  (e) => {
+    if (!e.touches.length) return;
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) touchMoved = true;
+    if (playing) e.preventDefault();
+  },
+  { passive: false }
+);
+
+canvas.addEventListener(
+  "touchend",
+  (e) => {
+    if (!playing) return;
+    const t = e.changedTouches && e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if (Math.max(absX, absY) >= SWIPE_MIN_DISTANCE) {
+      if (absX > absY) {
+        setPendingDirection(dx < 0 ? -1 : 1, 0);
+      } else {
+        setPendingDirection(0, dy < 0 ? -1 : 1);
+      }
+    } else {
+      applyTapDirection(t.clientX, t.clientY);
+    }
+
+    e.preventDefault();
+  },
+  { passive: false }
+);
 
 startBtn.addEventListener("click", startGame);
 colorPicker.addEventListener("click", (e) => {

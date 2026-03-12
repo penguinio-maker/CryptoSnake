@@ -560,6 +560,7 @@ canvas {
   max-height: calc(100vh - 160px);
   display: block;
   image-rendering: pixelated;
+  touch-action: none;
 }
 
 .overlay {
