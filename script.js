@@ -53,6 +53,11 @@ const playerViewEl = document.getElementById("playerView");
 const overlay = document.getElementById("overlay");
 const leaderboardBody = document.getElementById("leaderboardBody");
 const playerRankInfo = document.getElementById("playerRankInfo");
+const mobileStartBtn = document.getElementById("mobileStartBtn");
+const joyUpBtn = document.getElementById("joyUpBtn");
+const joyDownBtn = document.getElementById("joyDownBtn");
+const joyLeftBtn = document.getElementById("joyLeftBtn");
+const joyRightBtn = document.getElementById("joyRightBtn");
 const toggleFullLeaderboardBtn = document.getElementById("toggleFullLeaderboardBtn");
 const fullLeaderboardModalBackdrop = document.getElementById("fullLeaderboardModalBackdrop");
 const closeFullLeaderboardBtn = document.getElementById("closeFullLeaderboardBtn");
@@ -100,6 +105,10 @@ highScoreEl.textContent = highScore;
 
 function randomInt(max) {
   return Math.floor(Math.random() * max);
+}
+
+function isMobileGameplayMode() {
+  return document.body.classList.contains("mobile-layout") || window.matchMedia("(max-width: 950px), (pointer: coarse)").matches;
 }
 
 function setPendingDirection(nextX, nextY) {
@@ -783,27 +792,30 @@ function drawBackground() {
 
 function drawSnake() {
   const color = snakeColorInput.value;
+  const mobileMode = isMobileGameplayMode();
   snake.forEach((part, i) => {
     const px = part.x * TILE;
     const py = part.y * TILE;
-    const inset = i === 0 ? 2 : 3;
+    const inset = mobileMode ? (i === 0 ? 1 : 2) : (i === 0 ? 2 : 3);
 
     ctx.fillStyle = i === 0 ? "#ffffff" : color;
     ctx.fillRect(px + inset, py + inset, TILE - inset * 2, TILE - inset * 2);
 
     if (i === 0) {
       ctx.fillStyle = color;
-      ctx.fillRect(px + 7, py + 7, TILE - 14, TILE - 14);
+      const headInset = mobileMode ? 5 : 7;
+      ctx.fillRect(px + headInset, py + headInset, TILE - headInset * 2, TILE - headInset * 2);
     }
   });
 }
 
 function drawCoin() {
+  const mobileMode = isMobileGameplayMode();
   const x = coin.x * TILE + TILE / 2;
   const y = coin.y * TILE + TILE / 2;
 
   ctx.beginPath();
-  ctx.arc(x, y, TILE * 0.42, 0, Math.PI * 2);
+  ctx.arc(x, y, TILE * (mobileMode ? 0.46 : 0.42), 0, Math.PI * 2);
   ctx.fillStyle = coin.color;
   ctx.fill();
 
@@ -812,7 +824,7 @@ function drawCoin() {
   ctx.stroke();
 
   ctx.fillStyle = "#0d1120";
-  ctx.font = 'bold 10px "Press Start 2P", monospace';
+  ctx.font = `bold ${mobileMode ? 11 : 10}px "Press Start 2P", monospace`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(coin.symbol, x, y + 1);
@@ -1022,6 +1034,11 @@ canvas.addEventListener(
 );
 
 startBtn.addEventListener("click", startGame);
+mobileStartBtn.addEventListener("click", startGame);
+joyUpBtn.addEventListener("click", () => setPendingDirection(0, -1));
+joyDownBtn.addEventListener("click", () => setPendingDirection(0, 1));
+joyLeftBtn.addEventListener("click", () => setPendingDirection(-1, 0));
+joyRightBtn.addEventListener("click", () => setPendingDirection(1, 0));
 colorPicker.addEventListener("click", (e) => {
   const swatch = e.target.closest(".color-swatch");
   if (!swatch) return;

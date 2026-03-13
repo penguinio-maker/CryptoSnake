@@ -71,6 +71,16 @@
 
     <section class="game-wrap">
       <canvas id="game" width="640" height="640" aria-label="Game board"></canvas>
+      <div class="mobile-game-controls">
+        <button id="mobileStartBtn" type="button">Start / Restart</button>
+        <div class="joystick" aria-label="On-screen joystick">
+          <button class="joy-btn joy-up" id="joyUpBtn" type="button" aria-label="Move up">▲</button>
+          <button class="joy-btn joy-left" id="joyLeftBtn" type="button" aria-label="Move left">◀</button>
+          <button class="joy-btn joy-center" type="button" aria-label="Joystick center">●</button>
+          <button class="joy-btn joy-right" id="joyRightBtn" type="button" aria-label="Move right">▶</button>
+          <button class="joy-btn joy-down" id="joyDownBtn" type="button" aria-label="Move down">▼</button>
+        </div>
+      </div>
       <p class="watermark game-watermark">created by @PenguinWeb3</p>
       <div id="overlay" class="overlay visible">
         <h2>Press "Start"</h2>

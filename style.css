@@ -552,8 +552,11 @@ button:hover {
   overflow: hidden;
   min-height: 0;
   height: 100%;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   padding: 8px;
 }
 
@@ -565,6 +568,48 @@ canvas {
   display: block;
   image-rendering: pixelated;
   touch-action: none;
+}
+
+.mobile-game-controls {
+  display: none;
+  width: min(100%, 420px);
+  gap: 10px;
+}
+
+.joystick {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.joy-btn {
+  border: 1px solid rgba(129, 225, 255, 0.5);
+  background: linear-gradient(180deg, rgba(20, 72, 132, 0.92), rgba(13, 44, 90, 0.95));
+  color: #d8f6ff;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.8rem;
+  padding: 0;
+  min-height: 48px;
+}
+
+.joy-up { grid-column: 2; grid-row: 1; }
+.joy-left { grid-column: 1; grid-row: 2; }
+.joy-center { grid-column: 2; grid-row: 2; opacity: 0.7; pointer-events: none; }
+.joy-right { grid-column: 3; grid-row: 2; }
+.joy-down { grid-column: 2; grid-row: 3; }
+
+#mobileStartBtn {
+  width: 100%;
+  border: none;
+  background: linear-gradient(90deg, #2cc9ff, #50f2cc);
+  color: #031723;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.62rem;
+  padding: 12px 10px;
 }
 
 .overlay {
@@ -802,6 +847,19 @@ canvas {
   body {
     overflow: auto;
   }
+
+  .mobile-game-controls {
+    display: grid;
+  }
+
+  .controls {
+    display: none;
+  }
+
+  canvas {
+    width: min(100%, 92vw);
+    max-height: min(62vh, 560px);
+  }
 }
 
 body.mobile-layout {
@@ -837,4 +895,12 @@ body.mobile-layout .game-wrap {
 body.mobile-layout canvas {
   width: min(100%, 640px);
   max-height: none;
+}
+
+body.mobile-layout .mobile-game-controls {
+  display: grid;
+}
+
+body.mobile-layout .controls {
+  display: none;
 }
