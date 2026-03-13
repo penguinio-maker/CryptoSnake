@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Public read leaderboard, locked write-by-owner only.
+    match /leaderboard/{uid} {
+      allow read: if true;
+
+      // Create only own record and only with expected schema.
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.nickname is string
+        && request.resource.data.normalizedNickname is string
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 100000;
+
+      // Update only own record, score can only stay same or increase.
+      allow update: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.normalizedNickname == resource.data.normalizedNickname
+        && request.resource.data.nickname is string
+        && request.resource.data.score is int
+        && request.resource.data.score >= resource.data.score
+        && request.resource.data.score <= 100000;
+
+      allow delete: if false;
+    }
+  }
+}

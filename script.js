@@ -1,4 +1,6 @@
 ﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { ReCaptchaV3Provider, initializeAppCheck } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app-check.js";
 import {
   getFirestore,
   collection,
@@ -6,26 +8,31 @@ import {
   query,
   orderBy,
   limit,
+  where,
   serverTimestamp,
   doc,
   getDoc,
   setDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDoICGTopid5HoBZbppxcXnKwec_0I17kQ",
-  authDomain: "cryptosnail-8b85c.firebaseapp.com",
-  projectId: "cryptosnail-8b85c",
-  storageBucket: "cryptosnail-8b85c.firebasestorage.app",
-  messagingSenderId: "170408999913",
-  appId: "1:170408999913:web:9edb479e49af00dc3ce978",
-  measurementId: "G-XG3RR5C4BR"
-};
+const firebaseConfig = window.__FIREBASE_CONFIG__;
+if (!firebaseConfig) {
+  throw new Error("Missing Firebase config. Define window.__FIREBASE_CONFIG__ in firebase-config.js");
+}
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-console.log("Firebase підключений");
+const appCheckSiteKey = window.__FIREBASE_APPCHECK_SITE_KEY || "";
+if (appCheckSiteKey) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true
+  });
+}
+
+console.log("Firebase connected");
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -99,9 +106,38 @@ let isMuted = false;
 let isFullLeaderboardOpen = false;
 let fullLeaderboardData = [];
 const PLAYER_NAME_KEY = "cryptoSnakePlayerName";
-const PLAYER_NICKNAME_CLAIM_KEY = "cryptoSnakeClaimedNickname";
 const LAYOUT_MODE_KEY = "cryptoSnakeLayoutMode";
 const SWIPE_MIN_DISTANCE = 28;
+let currentUserUid = null;
+const authReadyPromise = new Promise((resolve) => {
+  let done = false;
+  let unsub = () => {};
+  const finish = (user) => {
+    if (done) return;
+    done = true;
+    resolve(user);
+  };
+
+  unsub = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUserUid = user.uid;
+      finish(user);
+      unsub();
+      return;
+    }
+
+    try {
+      const cred = await signInAnonymously(auth);
+      currentUserUid = cred.user ? cred.user.uid : null;
+      finish(cred.user || null);
+    } catch (error) {
+      console.error("Anonymous auth failed:", error);
+      finish(null);
+    } finally {
+      unsub();
+    }
+  });
+});
 
 highScoreEl.textContent = highScore;
 
@@ -156,20 +192,20 @@ function normalizeNickname(nick) {
 }
 
 async function checkNicknameAvailability(name) {
+  await authReadyPromise;
   const normalized = normalizeNickname(name);
   if (!normalized) {
     return { available: false, normalized };
   }
 
-  const ownedNormalized = localStorage.getItem(PLAYER_NICKNAME_CLAIM_KEY);
-  if (ownedNormalized && ownedNormalized === normalized) {
-    return { available: true, normalized };
-  }
-
   try {
-    const lbRef = doc(db, "leaderboard", normalized);
-    const snap = await getDoc(lbRef);
-    return { available: !snap.exists(), normalized };
+    const q = query(collection(db, "leaderboard"), where("normalizedNickname", "==", normalized), limit(1));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      return { available: true, normalized };
+    }
+    const takenDoc = snapshot.docs[0];
+    return { available: takenDoc.id === currentUserUid, normalized };
   } catch (error) {
     console.error("Nickname check failed:", error);
     return { available: false, normalized };
@@ -182,7 +218,6 @@ async function reserveNickname(name, normalized) {
 
   try {
     localStorage.setItem(PLAYER_NAME_KEY, safeName);
-    localStorage.setItem(PLAYER_NICKNAME_CLAIM_KEY, normalized);
     lockNicknameInput();
     return true;
   } catch (error) {
@@ -232,11 +267,16 @@ function renderFullLeaderboard(filterValue = "") {
 }
 
 function getCurrentPlayerRankInfo() {
+  if (!fullLeaderboardData.length) return null;
+  if (currentUserUid) {
+    const byUid = fullLeaderboardData.find((row) => row.uid === currentUserUid);
+    if (byUid) return byUid;
+  }
   const currentNick = getPlayerName();
   const currentNormalized = normalizeNickname(currentNick);
-  if (!currentNormalized || !fullLeaderboardData.length) return null;
-  const player = fullLeaderboardData.find((row) => normalizeNickname(row.nickname) === currentNormalized);
-  return player || null;
+  if (!currentNormalized) return null;
+  const byNickname = fullLeaderboardData.find((row) => normalizeNickname(row.nickname) === currentNormalized);
+  return byNickname || null;
 }
 
 function buildShareText(scoreValue) {
@@ -375,6 +415,7 @@ async function copyResultImage(scoreValue) {
 
 async function loadLeaderboard() {
   try {
+    await authReadyPromise;
     const topQuery = query(
       collection(db, "leaderboard"),
       orderBy("score", "desc"),
@@ -416,6 +457,7 @@ async function loadLeaderboard() {
           const data = d.data();
           return {
             rank: idx + 1,
+            uid: d.id,
             nickname: String(data.nickname || data.name || data.nick || "Guest"),
             score: Number(data.score || 0)
           };
@@ -423,11 +465,14 @@ async function loadLeaderboard() {
         if (isFullLeaderboardOpen) {
           renderFullLeaderboard(fullLeaderboardSearch ? fullLeaderboardSearch.value : "");
         }
-        const playerIndex = fullDocs.findIndex((d) => {
-          const data = d.data();
-          const nick = data.nickname || data.name || data.nick || "";
-          return normalizeNickname(nick) === currentNormalized;
-        });
+        let playerIndex = currentUserUid ? fullDocs.findIndex((d) => d.id === currentUserUid) : -1;
+        if (playerIndex < 0) {
+          playerIndex = fullDocs.findIndex((d) => {
+            const data = d.data();
+            const nick = data.nickname || data.name || data.nick || "";
+            return normalizeNickname(nick) === currentNormalized;
+          });
+        }
 
         if (playerIndex >= 10) {
           const data = fullDocs[playerIndex].data();
@@ -442,6 +487,11 @@ async function loadLeaderboard() {
   }
 }
 async function submitScore(nick, points) {
+  await authReadyPromise;
+  if (!currentUserUid) {
+    console.error("submitScore skipped: no authenticated uid");
+    return false;
+  }
   const safeName = (nick || "Guest").trim() || "Guest";
   const normalizedNick = normalizeNickname(safeName);
   if (!normalizedNick) {
@@ -449,7 +499,7 @@ async function submitScore(nick, points) {
     return false;
   }
 
-  const playerRef = doc(db, "leaderboard", normalizedNick);
+  const playerRef = doc(db, "leaderboard", currentUserUid);
 
   try {
     const existing = await getDoc(playerRef);
@@ -462,7 +512,9 @@ async function submitScore(nick, points) {
       await setDoc(
         playerRef,
         {
+          uid: currentUserUid,
           nickname: safeName,
+          normalizedNickname: normalizedNick,
           score: points,
           updatedAt: serverTimestamp()
         },
@@ -473,7 +525,9 @@ async function submitScore(nick, points) {
     }
 
     await setDoc(playerRef, {
+      uid: currentUserUid,
       nickname: safeName,
+      normalizedNickname: normalizedNick,
       score: points,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -1088,7 +1142,6 @@ playerNameInput.addEventListener("input", () => {
 });
 resetNicknameBtn.addEventListener("click", () => {
   localStorage.removeItem(PLAYER_NAME_KEY);
-  localStorage.removeItem(PLAYER_NICKNAME_CLAIM_KEY);
   playerNameInput.value = "";
   nicknameError.textContent = "";
   unlockNicknameInput();
@@ -1145,6 +1198,11 @@ setSnakeColor(snakeColorInput.value);
 syncAudioUi();
 loadLeaderboard();
 drawBackground();
+
+
+
+
+
 
 
 
