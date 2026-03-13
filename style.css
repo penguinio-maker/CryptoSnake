@@ -574,6 +574,8 @@ canvas {
   display: none;
   width: min(100%, 420px);
   gap: 10px;
+  position: relative;
+  z-index: 4;
 }
 
 .joystick {
@@ -622,6 +624,7 @@ canvas {
   transition: opacity .2s ease;
   opacity: 0;
   pointer-events: none;
+  z-index: 2;
 }
 
 .overlay.visible {
