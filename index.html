@@ -14,7 +14,6 @@
   <main class="app">
     <section class="panel">
       <h1>CRYPTO SNAKE</h1>
-      <p class="subtitle">Pixel vibe</p>
 
       <label for="playerName">Player Name</label>
       <input id="playerName" maxlength="18" placeholder="Enter your name" />
@@ -50,9 +49,6 @@
       <div class="controls">
         <button id="startBtn">Start / Restart</button>
       </div>
-      <div class="layout-toggle-wrap">
-        <button id="layoutToggleBtn" type="button">Switch to Mobile Layout</button>
-      </div>
       <div class="audio-controls">
         <button id="audioToggleBtn" type="button" aria-label="Toggle sound" aria-pressed="false">
           <span class="pixel-speaker-wrap" aria-hidden="true">
@@ -65,14 +61,14 @@
         </label>
       </div>
 
-      <p class="hint">Controls: Arrow keys or WASD</p>
-      <p class="hint tiny">Collect <b>SOL</b>, <b>BTC</b>, <b>ETH</b></p>
     </section>
 
     <section class="game-wrap">
       <canvas id="game" width="640" height="640" aria-label="Game board"></canvas>
+      <button id="gameZoomBtn" class="game-zoom-btn" type="button" aria-label="Toggle field zoom">#</button>
       <div class="mobile-game-controls">
         <button id="mobileStartBtn" type="button">Start / Restart</button>
+        <p class="watermark mobile-control-watermark">created by @PenguinWeb3</p>
         <div class="joystick" aria-label="On-screen joystick">
           <button class="joy-btn joy-up" id="joyUpBtn" type="button" aria-label="Move up">▲</button>
           <button class="joy-btn joy-left" id="joyLeftBtn" type="button" aria-label="Move left">◀</button>
@@ -111,6 +107,14 @@
         <p>SOL = 3 points</p>
         <p>ETH = 4 points</p>
         <p>BTC = 5 points</p>
+      </div>
+      <div class="rules-card info-card">
+        <h3>Info</h3>
+        <p>Controls: Arrow keys or WASD</p>
+        <p>Collect SOL, BTC, ETH</p>
+      </div>
+      <div class="layout-toggle-wrap panel-layout-toggle">
+        <button id="layoutToggleBtn" type="button">Switch to Mobile Layout</button>
       </div>
       <p class="watermark panel-watermark">created by @PenguinWeb3</p>
     </aside>

@@ -33,9 +33,17 @@ body {
   height: calc(100vh - 18px);
   display: grid;
   grid-template-columns: 330px minmax(420px, 1fr) 300px;
+  grid-template-rows: minmax(0, 1fr);
   gap: 20px;
   align-items: stretch;
   padding: 10px 0;
+}
+
+.app > .panel,
+.app > .game-wrap {
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
 }
 
 .panel,
@@ -52,6 +60,8 @@ body {
   overflow: auto;
   min-height: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .leaderboard-panel {
@@ -60,6 +70,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 }
 
 h1 {
@@ -110,14 +121,16 @@ button {
 }
 
 .nickname-tools {
-  margin-bottom: 10px;
+  margin: 6px 0 14px;
 }
 
 #resetNicknameBtn {
   width: 100%;
   font-family: "Press Start 2P", monospace;
-  font-size: 0.56rem;
-  padding: 9px 10px;
+  font-size: 0.58rem;
+  min-height: 44px;
+  padding: 12px 12px;
+  line-height: 1.35;
 }
 
 .nickname-warning {
@@ -348,7 +361,15 @@ button:hover {
   background: rgba(0, 0, 0, 0.24);
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.leaderboard-card::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .leaderboard-card h3 {
@@ -360,6 +381,7 @@ button:hover {
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 0.72rem;
   line-height: 1.5;
 }
@@ -374,6 +396,13 @@ button:hover {
 .leaderboard-table td:last-child,
 .leaderboard-table th:last-child {
   text-align: right;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .player-rank-info {
@@ -408,6 +437,14 @@ button:hover {
   background: rgba(2, 9, 22, 0.42);
   max-height: min(56vh, 460px);
   overflow: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.full-leaderboard-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .full-leaderboard-row {
@@ -560,6 +597,10 @@ button:hover {
   padding: 8px;
 }
 
+.game-wrap.zoomed {
+  box-shadow: 0 0 0 2px rgba(74, 224, 255, 0.45), 0 14px 30px rgba(6, 26, 52, 0.5);
+}
+
 canvas {
   width: min(100%, calc(100vh - 160px));
   height: auto;
@@ -568,6 +609,54 @@ canvas {
   display: block;
   image-rendering: pixelated;
   touch-action: none;
+  transform-origin: center center;
+  transition: transform .2s ease, filter .2s ease;
+}
+
+.game-wrap.zoomed canvas {
+  transform: scale(1.16);
+  filter: saturate(1.08) brightness(1.04);
+}
+
+.game-zoom-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(122, 230, 255, 0.72);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(24, 84, 148, 0.95), rgba(9, 39, 78, 0.96));
+  color: #c9f6ff;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.6rem;
+  line-height: 1;
+  box-shadow: 0 0 0 1px rgba(7, 26, 48, 0.7), 0 5px 12px rgba(0, 0, 0, 0.35);
+  z-index: 3;
+}
+
+.game-zoom-btn:hover {
+  filter: brightness(1.08);
+}
+
+.game-zoom-btn.active {
+  border-color: rgba(95, 241, 214, 0.94);
+  box-shadow: 0 0 0 1px rgba(6, 36, 51, 0.72), 0 0 12px rgba(73, 233, 255, 0.45);
+}
+
+.info-card p {
+  margin: 6px 0;
+}
+
+.panel-layout-toggle {
+  margin-top: 2px;
+}
+
+.panel-layout-toggle button {
+  width: 100%;
 }
 
 .mobile-game-controls {
@@ -650,7 +739,7 @@ canvas {
 
 .game-watermark {
   position: absolute;
-  right: 14px;
+  right: 52px;
   bottom: 10px;
   margin: 0;
   z-index: 2;
@@ -665,6 +754,15 @@ canvas {
 .overlay-watermark {
   margin: 8px 0 0;
   text-align: center;
+}
+
+.mobile-control-watermark {
+  display: none;
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 0.42rem;
+  color: rgba(166, 236, 255, 0.78);
+  text-shadow: 0 0 5px rgba(25, 170, 228, 0.3);
 }
 
 #playAgainBtn {
@@ -853,6 +951,14 @@ canvas {
 
   .mobile-game-controls {
     display: grid;
+  }
+
+  .mobile-control-watermark {
+    display: block;
+  }
+
+  .game-watermark {
+    display: none;
   }
 
   .controls {

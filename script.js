@@ -29,6 +29,8 @@ console.log("Firebase підключений");
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+const gameWrap = document.querySelector(".game-wrap");
+const gameZoomBtn = document.getElementById("gameZoomBtn");
 
 const startBtn = document.getElementById("startBtn");
 const layoutToggleBtn = document.getElementById("layoutToggleBtn");
@@ -1096,6 +1098,10 @@ layoutToggleBtn.addEventListener("click", () => {
   const mobileActive = document.body.classList.toggle("mobile-layout");
   localStorage.setItem(LAYOUT_MODE_KEY, mobileActive ? "mobile" : "desktop");
   syncLayoutButtonText();
+});
+gameZoomBtn.addEventListener("click", () => {
+  const zoomed = gameWrap.classList.toggle("zoomed");
+  gameZoomBtn.classList.toggle("active", zoomed);
 });
 toggleFullLeaderboardBtn.addEventListener("click", () => {
   isFullLeaderboardOpen = !isFullLeaderboardOpen;
