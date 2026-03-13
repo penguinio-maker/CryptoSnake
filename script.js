@@ -220,6 +220,148 @@ function renderFullLeaderboard(filterValue = "") {
     .join("");
 }
 
+function getCurrentPlayerRankInfo() {
+  const currentNick = getPlayerName();
+  const currentNormalized = normalizeNickname(currentNick);
+  if (!currentNormalized || !fullLeaderboardData.length) return null;
+  const player = fullLeaderboardData.find((row) => normalizeNickname(row.nickname) === currentNormalized);
+  return player || null;
+}
+
+function buildShareText(scoreValue) {
+  const nick = getPlayerName();
+  const rankInfo = getCurrentPlayerRankInfo();
+  const rankPart = rankInfo && rankInfo.rank ? ` Rank: #${rankInfo.rank}.` : "";
+  return `I scored ${scoreValue} points in Snake. Nickname: ${nick}.${rankPart} Can you beat me?`;
+}
+
+function buildResultCardCanvas(scoreValue) {
+  const nick = getPlayerName();
+  const rankInfo = getCurrentPlayerRankInfo();
+  const canvasCard = document.createElement("canvas");
+  canvasCard.width = 980;
+  canvasCard.height = 560;
+  const c = canvasCard.getContext("2d");
+
+  const bg = c.createLinearGradient(0, 0, canvasCard.width, canvasCard.height);
+  bg.addColorStop(0, "#08162f");
+  bg.addColorStop(1, "#12305a");
+  c.fillStyle = bg;
+  c.fillRect(0, 0, canvasCard.width, canvasCard.height);
+
+  // Subtle atmospheric glow
+  const haze = c.createRadialGradient(260, 130, 40, 260, 130, 360);
+  haze.addColorStop(0, "rgba(97, 216, 255, 0.15)");
+  haze.addColorStop(1, "rgba(97, 216, 255, 0)");
+  c.fillStyle = haze;
+  c.fillRect(0, 0, canvasCard.width, canvasCard.height);
+
+  // Faint pixel-art scene (watermark style)
+  const px = (x, y, w, h, color) => {
+    c.fillStyle = color;
+    c.fillRect(x, y, w, h);
+  };
+  const baseY = 420;
+
+  // Distant mountains
+  c.globalAlpha = 0.2;
+  px(40, baseY - 40, 220, 40, "#5f82bd");
+  px(120, baseY - 80, 160, 40, "#5f82bd");
+  px(300, baseY - 55, 250, 55, "#7098d1");
+  px(420, baseY - 95, 160, 40, "#7098d1");
+  px(620, baseY - 50, 260, 50, "#5f82bd");
+  px(760, baseY - 85, 150, 35, "#5f82bd");
+
+  // Ground band
+  c.globalAlpha = 0.22;
+  px(0, 448, canvasCard.width, 70, "#173a63");
+  px(0, 518, canvasCard.width, 42, "#0e2745");
+
+  // Pixel tree (left)
+  c.globalAlpha = 0.24;
+  px(120, 390, 20, 58, "#2b4f40");
+  px(86, 340, 88, 24, "#4db19a");
+  px(74, 364, 112, 22, "#3d9f8a");
+  px(92, 318, 76, 22, "#64cdb5");
+
+  // Small pagoda silhouette (right)
+  c.globalAlpha = 0.2;
+  px(760, 384, 96, 12, "#6eb8d4");
+  px(776, 372, 64, 12, "#6eb8d4");
+  px(790, 360, 36, 12, "#6eb8d4");
+  px(804, 332, 8, 40, "#6eb8d4");
+  px(794, 396, 28, 44, "#5a8fb5");
+
+  // Clouds
+  c.globalAlpha = 0.18;
+  px(180, 122, 78, 14, "#b5d8ff");
+  px(210, 110, 42, 12, "#b5d8ff");
+  px(640, 138, 90, 14, "#b5d8ff");
+  px(676, 124, 46, 12, "#b5d8ff");
+  c.globalAlpha = 1;
+
+  c.strokeStyle = "#4fe7ff";
+  c.lineWidth = 8;
+  c.strokeRect(20, 20, canvasCard.width - 40, canvasCard.height - 40);
+  c.strokeStyle = "rgba(129, 235, 255, 0.35)";
+  c.lineWidth = 2;
+  c.strokeRect(36, 36, canvasCard.width - 72, canvasCard.height - 72);
+
+  c.fillStyle = "#dff8ff";
+  c.font = '22px "Press Start 2P", monospace';
+  c.fillText("CRYPTO SNAKE", 70, 86);
+  c.fillStyle = "#8fc7ff";
+  c.font = '14px "Press Start 2P", monospace';
+  c.fillText("Achievement Card", 70, 114);
+
+  c.fillStyle = "#9ad2ff";
+  c.font = '16px "Press Start 2P", monospace';
+  c.fillText(`Nickname: ${nick}`, 70, 176);
+  c.fillText(`Best Score: ${highScore}`, 70, 212);
+  if (rankInfo && rankInfo.rank) {
+    c.fillText(`Rank: #${rankInfo.rank}`, 70, 248);
+  }
+
+  // Score hero area
+  c.fillStyle = "rgba(17, 50, 94, 0.55)";
+  c.fillRect(48, 264, canvasCard.width - 96, 140);
+  c.strokeStyle = "rgba(85, 230, 255, 0.5)";
+  c.lineWidth = 3;
+  c.strokeRect(48, 264, canvasCard.width - 96, 140);
+
+  c.fillStyle = "#57f1cd";
+  c.font = '72px "Press Start 2P", monospace';
+  c.fillText(`${scoreValue}`, 74, 357);
+  c.fillStyle = "#9cf8e1";
+  c.font = '24px "Press Start 2P", monospace';
+  c.fillText("POINTS", 610, 357);
+
+  c.fillStyle = "rgba(255,255,255,0.85)";
+  c.font = '14px "Press Start 2P", monospace';
+  c.fillText("Can you beat this score?", 70, 488);
+
+  c.fillStyle = "rgba(125, 223, 255, 0.68)";
+  c.font = '12px "Press Start 2P", monospace';
+  c.fillText("created by @PenguinWeb3", 632, 520);
+
+  return canvasCard;
+}
+
+async function copyResultImage(scoreValue) {
+  if (!navigator.clipboard || !window.ClipboardItem) {
+    throw new Error("IMAGE_COPY_NOT_SUPPORTED");
+  }
+
+  const canvasCard = buildResultCardCanvas(scoreValue);
+  const blob = await new Promise((resolve) => canvasCard.toBlob(resolve, "image/png"));
+  if (!blob) {
+    throw new Error("IMAGE_BLOB_FAILED");
+  }
+
+  const item = new ClipboardItem({ "image/png": blob });
+  await navigator.clipboard.write([item]);
+}
+
 async function loadLeaderboard() {
   try {
     const topQuery = query(
@@ -684,13 +826,36 @@ function endGame() {
   overlay.innerHTML = `
     <h2>Game Over</h2>
     <p>Your score: ${score}</p>
+    <button id="playAgainBtn" type="button">Play Again</button>
+    <div class="result-actions">
+      <button id="copyImageBtn" type="button">Copy Image</button>
+    </div>
+    <p id="shareResultStatus"></p>
     <p id="saveScoreStatus"></p>
+    <p class="watermark overlay-watermark">created by @PenguinWeb3</p>
   `;
 
+  const playAgainBtn = document.getElementById("playAgainBtn");
+  const copyImageBtn = document.getElementById("copyImageBtn");
+  const shareResultStatus = document.getElementById("shareResultStatus");
   const saveScoreStatus = document.getElementById("saveScoreStatus");
   const nick = getPlayerName();
   saveScoreStatus.textContent = "Saving...";
 
+  playAgainBtn.addEventListener("click", async () => {
+    playAgainBtn.disabled = true;
+    await startGame();
+    playAgainBtn.disabled = false;
+  });
+  copyImageBtn.addEventListener("click", async () => {
+    try {
+      await copyResultImage(score);
+      shareResultStatus.textContent = "Result image copied.";
+    } catch (error) {
+      console.error("Result image copy failed:", error);
+      shareResultStatus.textContent = "Image copy is not supported in this browser";
+    }
+  });
   (async () => {
     if (!db) {
       saveScoreStatus.textContent = "Firebase is not configured yet.";
